@@ -1,0 +1,33 @@
+---
+- name: Installation of Apache2 & Php Server on CentOS
+  hosts: all
+  become: yes
+  tasks:
+    - name: Installing httpd
+      ansible.builtin.dnf:
+        name: httpd
+        update_cache: yes
+        state: present
+    - name: Start & Enable httpd
+      ansible.builtin.systemd:
+        name: httpd
+        state: started
+        enabled: yes
+    - name: Installing Packages
+      package:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - php 
+        - php-mysqlnd
+    - name: Restart httpd
+      ansible.builtin.systemd:
+        name: httpd
+        state: present 
+    - name: Copy the info.php file
+      ansible.builtin.copy:
+        src: info.php
+        dest: /var/www/html/info.php
+        
+        
+    

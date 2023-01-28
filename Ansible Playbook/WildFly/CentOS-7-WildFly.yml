@@ -1,0 +1,69 @@
+---
+- name: Install WildFly Server on CentOS-7
+  hosts: all
+  become: yes
+  tasks:
+    - name: Installing JDK-11
+      ansible.builtin.yum:
+        name: java-11-openjdk-devel
+        update_cache: yes
+        state: present 
+    - name: Creating Group for WildFly
+      ansible.builtin.group:
+        name: wildfly
+        state: present
+    - name: Adding User to a Group
+      ansible.builtin.user:
+        name: wildfly
+        home: /opt/wildfly
+        shell: /sbin/nologin
+        groups: wildfly
+        append: yes
+    - name: Downloading WildFly
+      ansible.builtin.get_url:
+        url: https://download.jboss.org/wildfly/16.0.0.Final/wildfly-16.0.0.Final.tar.gz
+        dest: /tmp
+    - name: Extracting WildFly
+      ansible.builtin.unarchive:
+        src: /tmp/wildfly-16.0.0.Final.tar.gz
+        remote_src: yes
+        dest: /opt/
+    - name: Changing Ownership
+      ansible.builtin.file:
+        path: /opt/wildfly
+        owner: wildfly
+        group: wildfly
+    - name: Creating a Directory
+      ansible.builtin.file:
+        path: /etc/wildfly
+        state: directory
+    - name: Copying Configuration File 
+      ansible.builtin.copy:
+        src: /opt/wildfly-16.0.0.Final/docs/contrib/scripts/systemd/wildfly.conf
+        dest: /etc/wildfly/
+        owner: wildfly
+        group: wildfly
+        remote_src: yes
+    - name: Copying WildFly Launch Script  
+      ansible.builtin.copy:
+        src: /opt/wildfly-16.0.0.Final/docs/contrib/scripts/systemd/launch.sh
+        dest: /opt/wildfly/bin/
+        owner: wildfly
+        group: wildfly
+        remote_src: yes
+    - name: Adding Execute Permissions to Shell Files
+      ansible.builtin.command: sh -c 'chmod +x /opt/wildfly/bin/*.sh'
+    - name: Copying the systemd unit file to the directory 
+      ansible.builtin.copy:
+        src: /opt/wildfly-16.0.0.Final/docs/contrib/scripts/systemd/wildfly.service
+        dest: /etc/systemd/system/
+        owner: wildfly
+        group: wildfly
+        remote_src: yes
+    - name: Reload systemctl
+      ansible.builtin.systemd:
+        name: wildfly.service
+        daemon_reload: yes
+        state: started
+        enabled: yes
+        

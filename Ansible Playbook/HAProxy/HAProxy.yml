@@ -1,0 +1,23 @@
+---
+- name: Installation of HAProxy on Ubuntu
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install HAProxy
+      ansible.builtin.apt:
+        name: haproxy
+        update_cache: yes
+        state: present
+    - name: Copying HAProxy File for Backup
+      ansible.builtin.copy:
+        src: /etc/haproxy/haproxy.cfg
+        dest: /etc/haproxy/haproxy.cfg.bk
+        remote_src: yes
+    - name: Replacing a HAProxy file from Master to Node
+      ansible.builtin.copy:
+        src: /home/shoaib/haproxy/haproxy.cfg
+        dest: /etc/haproxy/haproxy.cfg
+    - name: Restart HAProxy
+      ansible.builtin.systemd:
+        name: haproxy
+        state: restarted

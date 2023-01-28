@@ -1,0 +1,26 @@
+---
+- name: Installation of Java 19 Using Path Variable on Ubuntu
+  hosts: all
+  become: yes
+  vars: 
+    java_version: "19"
+  tasks:
+    - name: Download Java From Official Website
+      get_url:
+        url: https://download.oracle.com/java/19/latest/jdk-19_linux-x64_bin.tar.gz
+        dest: /root
+    - name: Unzipping the Downloaded File
+      unarchive:
+        src: /root/jdk-19_linux-x64_bin.tar.gz
+        dest: /root
+        remote_src: yes
+    - name: Setting Environment For Java
+      copy:
+        dest: /etc/environment
+        content: |
+          PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+          PATH=$PATH:$JAVA_HOME/root/jdk-19.0.2/bin
+    - name: Setting Source For Java
+      command:
+        cmd: source /etc/environment
+ 

@@ -1,0 +1,12 @@
+---
+- name: Installation of Java 11/17/19 Using Variable on Ubuntu
+  hosts: all
+  become: yes
+  vars: 
+    java_version: "11"
+  tasks:
+    - name: Installing JDK-11
+      ansible.builtin.apt:
+        name: openjdk-"{{ java_version }}"-jdk
+        update_cache: yes
+        state: present 

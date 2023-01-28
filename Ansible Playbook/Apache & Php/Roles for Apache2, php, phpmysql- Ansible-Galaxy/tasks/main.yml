@@ -1,0 +1,16 @@
+---
+# tasks file for shoaib
+- name: install apache2
+  ansible.builtin.apt:
+    name: apache2
+    update_cache: yes
+    state: present
+- name: Installing Packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - mysql-server
+    - php 
+    - php-mysql
+    

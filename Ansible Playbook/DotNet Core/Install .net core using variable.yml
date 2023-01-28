@@ -1,0 +1,25 @@
+---
+- name: Installation of .Net Core 6/7 Using Variable on Ubuntu
+  hosts: all
+  become: yes
+  vars:
+    Ubuntu_Version: "20.04"
+    Dotnet_Version: "6.0" 
+  tasks:
+    - name: Add Microsoft package & package repository
+      ansible.builtin.get_url:
+        url: https://packages.microsoft.com/config/ubuntu/"{{ Ubuntu_Version }}"/packages-microsoft-prod.deb
+        dest: /home
+    - name: Install downloaded package
+      ansible.builtin.dpkg_selections:
+        name: packages-microsoft-prod.deb
+        selection: install
+    - name: Remove file
+      ansible.builtin.file:
+        path: /home/packages-microsoft-prod.deb
+        state: absent
+    - name: Update & Install dotNet Core 
+      ansible.builtin.apt:
+        name: dotnet-sdk-"{{ Dotnet_Version }}"
+        update_cache: yes
+        state: present 

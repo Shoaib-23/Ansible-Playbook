@@ -1,0 +1,91 @@
+---
+- name: Install WildFly Server on Ubuntu
+  hosts: all
+  become: yes
+  vars: 
+    java_package_name: "openjdk-11-jdk"
+    user_name: wildfly
+    group_name: wildfly
+    wildfly_version: "16.0.0.Final"
+    user_home: /opt/wildfly
+    dest: /tmp
+    path: /opt/wildfly/docs/contrib/scripts/systemd/
+    mode: '777'
+  tasks:
+    - name: Installing JDK-11
+      ansible.builtin.apt:
+        name: "{{ java_package_name }}"
+        update_cache: yes
+        state: present 
+    - name: Creating Group for WildFly
+      ansible.builtin.group:
+        name: "{{ user_name }}"
+        state: present
+    - name: Adding User to a Group
+      ansible.builtin.user:
+        name: "{{ group_name }}"
+        home: "{{ user_home }}"
+        shell: /sbin/nologin wildfly
+        groups: "{{ group_name }}"
+        state: present
+    - name: Downloading WildFly
+      ansible.builtin.get_url:
+        url: "https://download.jboss.org/wildfly/{{ wildfly_version }}/wildfly-{{ wildfly_version }}.tar.gz"
+        dest: "{{ dest }}"
+        group: "{{ group_name }}"
+        owner: "{{ user_name }}"
+    - name: Extracting WildFly
+      ansible.builtin.unarchive:
+        src: "{{ dest }}/wildfly-{{ wildfly_version }}.tar.gz"
+        remote_src: yes
+        dest: "{{ dest }}"
+    - name: Moving WildFly to opt  
+      ansible.builtin.copy:
+        src: "{{ dest }}/wildfly-{{ wildfly_version }}/"
+        dest: "{{ user_home }}"
+        remote_src: yes
+    - name: Changing Ownership
+      ansible.builtin.file:
+        path: "{{ user_home }}"
+        owner: "{{ user_name }}"
+        group: "{{ group_name}}"
+        mode: "{{ mode }}"
+        recurse: yes
+    - name: Creating a Directory
+      ansible.builtin.file:
+        path: /etc/wildfly
+        group: "{{ group_name }}"
+        owner: "{{ user_name }}"
+        state: directory
+    - name: Copying Configuration File 
+      ansible.builtin.copy:
+        src: "{{ path }}wildfly.conf"
+        dest: /etc/wildfly/
+        owner: "{{ user_name }}"
+        group: "{{ group_name }}"
+        remote_src: yes
+        mode: "{{ mode }}"
+    - name: Copying WildFly Launch Script  
+      ansible.builtin.copy:
+        src: "{{ path }}launch.sh"
+        dest: /opt/wildfly/bin/
+        owner: "{{ user_name }}"
+        group: "{{ group_name }}"
+        remote_src: yes
+        mode: "{{ mode }}"
+    - name: Adding Execute Permissions to Shell Files
+      ansible.builtin.command: sh -c 'chmod +x /opt/wildfly/bin/*.sh'
+    - name: Copying the systemd unit file to the directory 
+      ansible.builtin.copy:
+        src: "{{ path }}wildfly.service"
+        dest: /etc/systemd/system/
+        owner: "{{ user_name }}"
+        group: "{{ group_name }}"
+        remote_src: yes
+        mode: "{{ mode }}"
+    - name: Start & Enable the WildFly Service
+      ansible.builtin.systemd:
+        name: wildfly.service
+        state: started
+        enabled: yes
+        

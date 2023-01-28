@@ -1,0 +1,58 @@
+---
+- name: Installation of Apache2 & Php Server on Ubuntu/CentOS
+  hosts: all
+  become: yes
+  tasks:
+    - name: Installing Apache2 on Ubuntu
+      ansible.builtin.apt:
+        name: apache2
+        update_cache: yes
+        state: present
+      when: ansible_facts['distribution'] == "Ubuntu"
+      notify:
+        - enable and restart apache2
+    - name: Installing Apache2 on CentOS 
+      ansible.builtin.yum:
+        name: httpd
+        update_cache: yes
+        state: present
+      when: ansible_facts['distribution'] == "CentOS"
+      notify:
+        - enable and restart httpd
+    - name: install php modules on Ubuntu
+      ansible.builtin.apt:
+        name:
+          - php
+          - libapache2-mod-php
+          - php-mysql
+        state: present
+      when: ansible_facts['distribution'] == "Ubuntu"
+      notify:
+        - enable and restart apache2
+    - name: install php modules on CentOS
+      ansible.builtin.yum:
+        name:
+          - php
+          - php-mysql
+        update_cache: yes
+        state: present
+      when: ansible_facts['distribution'] == "CentOS"
+      notify:
+        - enable and restart httpd
+    - name: Copy info.php
+      ansible.builtin.copy:
+        src: info.php
+        dest: /var/www/html/info.php    
+  handlers:
+    - name: enable and restart apache2
+      ansible.builtin.systemd:
+        name: apache2
+        enabled: yes
+        state: restarted
+    - name: enable and restart httpd
+      ansible.builtin.systemd:
+        name: httpd
+        enabled: yes
+        state: restarted
+        
+        
